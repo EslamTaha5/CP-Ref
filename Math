@@ -1,0 +1,429 @@
+ll gcd(ll a, ll b) { return b == 0 ? a : gcd(b, a % b); }
+ 
+ll lcm(ll a, ll b) { return a / gcd(a, b) * b; }
+//8 coordinates
+
+
+ll nCr(ll n, ll r) {
+    ll ans = 1, div = 1; // r!
+    for (ll i = r + 1; i <= n; i++) {
+        ans = ans * i;
+        ans /= div;
+        div++;
+    }
+    return ans;
+}
+ 
+ll nPr(ll n, ll r) {
+    ll ans = 1;
+    for (ll i = (n - r) + 1; i <= n; i++) {
+        ans *= i;
+        ans %= mod;
+    }
+    return ans;
+}
+
+///x^1+x^2.....+x^n
+ll ans =1;
+ll po(ll x,ll n){
+    if(n==1)return x;
+    if(n==0)return 1;
+    ans=po(x,n/2);
+    ans*=ans;
+    if(n&1)ans*=x;
+    return ans;
+}
+ll po2(ll x,ll n){
+    ll result=1;
+    while(n){
+        if(n&1){
+            result*=x;
+        }
+        x*=x;
+        n/=2;
+    }
+    return result;
+}
+ll po2(ll x, ll n,ll md) {
+    ll result = 1;
+    while (n) {
+        if (n & 1) {
+            result = (result * x) % md;
+        }
+        x = (x * x) % md;
+        n /= 2;
+        result %= md;
+    }
+    return result % mod;
+}
+ll calc(ll x,ll n){
+    if (n==1)return x;
+    ans=calc(x,n/2);
+    ans+= ans*po2(x,n/2);
+    if(n&1)ans+=po2(x,n);
+    return ans;
+}
+
+ll sumPower(ll a, ll k, int mod) {
+    if (k == 1) return a % mod;
+    ll half = sumPower(a, k / 2, mod);
+    ll p = half * fpow(a, k / 2, mod) % mod;
+    p = (p + half) % mod;
+    if (k & 1) p = (p + fpow(a, k, mod)) % mod;
+    return p;
+}
+// return number of Divisors(n) using prime factorization
+ll numOfDivisors(primeFactors mp) {
+    ll cnt = 1;
+    for (auto it : mp) cnt *= (it.second + 1);
+    return cnt;
+}
+// return sum of Divisors(n) using prime factorization
+ll sumOfDivisors(primeFactors mp) {
+    ll sum = 1;
+    for (auto it : mp) sum *= sumPower(it.first, it.second);
+    return sum;
+}
+
+// (a^n)%p=result, return minimum n
+int getPower(int a, int result, int mod) {
+    int sq = sqrt(mod);
+    map<int, int> mp;
+    ll r = 1;
+    for (int i = 0; i < sq; i++) {
+        if (mp.find(r) == mp.end())
+            mp[r] = i;
+        r = (r * a) % mod;
+    }
+    ll tmp = modInverse(r, mod);
+    ll cur = result;
+    for (int i = 0; i <= mod; i += sq) {
+        if (mp.find(cur) != mp.end())
+            return i + mp[cur];
+        cur = (cur * tmp) % mod;//val/(a^sq)
+    }
+    return INF;
+}
+
+// Returns minimum x for which a ^ x % m = b % m.
+// a,m not not coprime
+int getPower(int a, int b, int m) {
+    a %= m, b %= m;
+    int k = 1, add = 0, g;
+    while ((g = __gcd(a, m)) > 1) {
+        if (b == k)
+            return add;
+        if (b % g)
+            return -1;
+        b /= g, m /= g, ++add;
+        k = (k * 1ll * a / g) % m;
+    }
+    int n = sqrt(m) + 1;
+    int an = 1;
+    for (int i = 0; i < n; ++i)
+        an = (an * 1ll * a) % m;
+    unordered_map<int, int> vals;
+    for (int q = 0, cur = b; q <= n; ++q) {
+        vals[cur] = q;
+        cur = (cur * 1ll * a) % m;
+    }
+    for (int p = 1, cur = k; p <= n; ++p) {
+        cur = (cur * 1ll * an) % m;
+        if (vals.count(cur)) {
+            int ans = n * p - vals[cur] + add;
+            return ans;
+        }
+    }
+    return -1;
+}
+///seive
+
+vector<int> seive() {
+    vector<bool> v(N, 1);
+    v[0] = v[1] = 0;
+    for (int i = 4; i <= N; i += 2)v[i] = 0;
+    for (int i = 3; i * i <= N; i += 2) {
+        if (!v[i])continue;
+        for (int j = 2 * i; j < N; j += i + i) {
+            v[j] = 0;
+        }
+    }
+    vector<int> primes;
+    for (int i = 2; i < N; i++) {
+        if (v[i])primes.push_back(i);
+    }
+    return primes;
+}
+// linear seive
+int lpf[N + 1];
+vector<int> prime;
+void sieve() {
+    for (int i = 2; i <= N; i++) {
+        if (lpf[i] == 0) {
+            lpf[i] = i;
+            prime.push_back(i);
+        }
+        for (int j : prime) {
+            if (j > lpf[i] || 1LL * i * j > N)break;
+            lpf[i * j] = j;
+        }
+    }
+}
+//prime and counting divisors
+
+const int ITER = 4;
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+bool millerTest(ll n, ll d) {
+    ll a = uniform_int_distribution<ll>(2, n - 2)(rng);
+    a = fpow(a, d, n);
+    if (a == 1 || a == n - 1)
+        return true;
+    d <<= 1;
+    while (d != n - 1) {
+        a = a * a % n;
+        if (a == 1) return false;
+        if (a == n - 1) return true;
+        d <<= 1;
+    }
+
+    return false;
+}
+bool isPrime(ll n) {
+    if (n <= 1) return false;
+    if (n <= 3) return true;
+    if (!(n & 1)) return false;
+    ll d = n - 1;
+    while (!(d & 1))
+        d >>= 1;
+    for (int i = 0; i < ITER; i++)
+        if (!millerTest(n, d))
+            return false;
+    return true;
+}
+bool isPrimeSquare(ll n) {
+    ll sq = round(sqrt(n));
+    if (sq * sq < n) {
+        sq++;
+        if (sq * sq != n)return false;
+    }
+    return isPrime(n);
+}
+int countDivisors(ll n) {
+    // ans will contain total number of distinct
+    // divisors
+    int ans = 1;
+    // Loop for counting factors of n
+    for (int i = 2; 1LL * i * i * i <= n; i++) {
+        // Calculating power of i in n.
+        int cnt = 1; // cnt is power of prime i in n.
+        while (n % i == 0) // if i is a factor of n
+        {
+            n = n / i;
+            cnt = cnt + 1; // incrementing power
+        }
+        // Calculating the number of divisors
+        // If n = a^p * b^q then total divisors of n
+        // are (p+1)*(q+1)
+        ans = ans * cnt;
+    }
+    // If i is greater than cube root of n
+    // First case
+    if (isPrime(n))
+        ans = ans << 1;
+    // Second case
+    else if (isPrimeSquare(n))
+        ans = ans * 3;
+    // Third case
+    else if (n != 1)
+        ans = ans << 2;
+    return ans; // Total divisors
+}
+////
+char mob[N];
+bool prime[N];
+void moebius() {
+    memset(mob, 1, sizeof mob);
+    memset(prime + 2, 1, sizeof(prime) - 2);
+    mob[0] = 0;
+    mob[2] = -1;
+    for (int i = 4; i < N; i += 2) {
+        mob[i] *= (i & 3) ? -1 : 0;
+        prime[i] = 0;
+    }
+    for (int i = 3; i < N; i += 2)
+        if (prime[i]) {
+            mob[i] = -1;
+            for (int j = 2 * i; j < N; j += i) {
+                mob[j] *= j % (1LL * i * i) ? -1 : 0;
+                prime[j] = 0;
+            }
+        }
+
+}
+///EX_GCD
+ll egcd(ll a, ll b, ll& x, ll& y) {
+    if (a < 0) {
+        auto g = egcd(-a, b, x, y);
+        x *= -1;
+        return g;
+    }
+    if (b < 0) {
+        auto g = egcd(a, -b, x, y);
+        y *= -1;
+        return g;
+    }
+    if (!b) {
+        x = 1;
+        y = 0;
+        return a;
+    }
+    ll x1, y1;
+    ll g = egcd(b, a % b, x1, y1);
+    x = y1, y = x1 - y1 * (a / b);
+    return g;
+}
+
+bool Diophantine_Solution(ll a, ll b, ll c, ll& x, ll& y, ll& g) {
+    if (!a && !b) {
+        if (c) return false;
+        x = y = g = 0;
+        return true;
+    }
+    g = egcd(a, b, x, y);
+    if (c % g) return false;
+    x *= c / g;
+    y *= c / g;
+    return true;
+}
+void shift_solution(ll& x, ll& y, ll a, ll b, ll cnt) {
+    x += b * cnt;
+    y -= a * cnt;
+}
+///nCr
+ 
+ll binpow(ll x, ll n) { return n == 0 ? 1 : binpow(x * x % mod, n >> 1) * (n & 1 ? x : 1) % mod; }
+
+ll modinv(ll n) {
+    return binpow(n, mod - 2);
+}
+
+ll fact[N];
+ll inv[N]; //mod inverse for i
+ll invfact[N]; //mod inverse for i!
+
+void factInverse() {
+    fact[0] = inv[1] = fact[1] = invfact[0] = invfact[1] = 1;
+    for (long long i = 2; i < N; i++) {
+        fact[i] = (fact[i - 1] * i) % mod;
+        inv[i] = mod - (inv[mod % i] * (mod / i) % mod);
+        invfact[i] = (inv[i] * invfact[i - 1]) % mod;
+    }
+}
+ll nCr(int n, int r) {
+    if (r > n) return 0;
+    return (((fact[n] * invfact[r]) % mod) * invfact[n - r]) % mod;
+}
+
+// return catalan number n-th using dp O(n^2)//max = 35 then overflow
+vector<ll> catalanNumber(int n) {
+    vector<ll> catalan(n + 1);
+    catalan[0] = catalan[1] = 1;
+    for (int i = 2; i <= n; i++) {
+        ll& rt = catalan[i];
+        for (int j = 0; j < n; j++)
+            rt += catalan[j] * catalan[n - j - 1];
+
+    }
+    return catalan;
+}
+
+
+// Matrix 
+#define REP(i, n) for(int i = 0; i < n ;i++)
+#define sz(a)   a.size()
+struct matrix {
+    using T = int;
+    using row = vector<T>;
+    vector<vector<T>> v;
+    matrix() {}
+    matrix(int n, int m, T val = 0) : v(n, row(m, val)) {
+    }
+    int size() const {
+        return v.size();
+    }
+    int cols() const {
+        return v[0].size();
+    }
+    matrix operator*(T a) const {
+        matrix rt = *this;
+        REP(i, rt.size())
+        REP(j, rt.cols())
+        rt.v[i][j] *= a;
+        return rt;
+    }
+    friend matrix operator*(T a, const matrix& b) {
+        return (b * a);
+    }
+
+    friend matrix operator+(const matrix& a, const matrix& b) {
+        assert(a.size() == b.size() && a.cols() == b.cols());
+        matrix rt(a.size(), a.cols());
+        REP(i, rt.size()) REP(j, rt.cols())
+        rt.v[i][j] = a.v[i][j] + b.v[i][j];
+        return rt;
+    }
+    friend matrix operator*(const matrix& a, const matrix& b) {
+        assert(a.cols() == b.size());
+        matrix rt(a.size(), b.cols());
+        REP(i, rt.size()) REP(k, a.cols()) {
+            if (a.v[i][k] == 0) continue;
+            REP(j, rt.cols()) rt.v[i][j] += a.v[i][k] * b.v[k][j];
+        }
+        return rt;
+    }
+};
+matrix identity1(int n) {
+    matrix r(n, n);
+    for (int i = 0; i < n; i++)
+        r.v[i][i] = 1;
+    return r;
+}
+matrix addIdentity(const matrix& a) {
+    matrix rt = a;
+    REP(i, a.size()) rt.v[i][i]++;
+    return rt;
+}
+matrix power(matrix a, long long y) {
+    assert(y >= 0 && a.size() == a.cols());
+    matrix rt = identity1(a.size());
+    while (y > 0) {
+        if (y & 1)
+            rt = rt * a;
+        a = a * a;
+        y >>= 1;
+    }
+    return rt;
+}
+matrix sumPower(const matrix& a, ll k) {
+    if (k == 0)
+        return matrix(sz(a), sz(a));
+    if (k & 1)
+        return a * addIdentity(sumPower(a, k - 1));
+    return (sumPower(a, k >> 1) * addIdentity(power(a, k >> 1)));
+}
+/* return matrix contains
+a^k 0
+a^1+a^2.. a^k I
+*/
+
+matrix sumPowerV2(const matrix& a, ll k) {
+    int n = sz(a);
+    matrix rt(2 * n, 2 * n);
+    REP(i, n) REP(j, n) {
+        rt.v[i][j] = a.v[i][j];
+        rt.v[i + n][j] = a.v[i][j];
+    }
+    for (int i = n; i < 2 * n; i++)
+        rt.v[i][i] = 1;
+    return power(rt, k);
+}

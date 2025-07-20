@@ -1,0 +1,100 @@
+template<typename T> struct fenwick_tree {
+    /* can convert it to map, build what you need only
+    * will be: memory O(q*logn) ,time O(logn*logn) */
+    vector<T> BIT;
+    int n;
+    fenwick_tree(int n) : n(n), BIT(n + 1) {}
+    T getAccum(int idx) {
+        T sum = 0;
+        while (idx) {
+            sum += BIT[idx];
+            idx -= (idx & -idx);
+        }
+        return sum;
+    }
+    void add(int idx, T val) {
+        assert(idx != 0);
+        while (idx <= n) {
+            BIT[idx] += val;
+            idx += (idx & -idx);
+        }
+    }
+    T getValue(int idx) {
+        return getAccum(idx) - getAccum(idx - 1);
+    }
+    // ordered statistics tree // get index that has value >= accum
+    // values must by positive
+    int getIdx(T accum) {
+        int start = 1, end = n, rt = -1;
+        while (start <= end) {
+            int mid = start + end >> 1;
+            T val = getAccum(mid);
+            if (val >= accum)
+                rt = mid, end = mid - 1;
+            else start = mid + 1;
+        }
+        return rt;
+    }
+    //not tested (from topcoder)
+    //first index less than or equal accum O(logn) (same as getIdx)
+    int find(T accum) {
+        int i = 1, idx = 0;
+        while ((1 << i) <= n) i <<= 1;
+        for (; i > 0; i >>= 1) {
+            int tidx = idx + i;
+            if (tidx > n) continue;
+            if (accum >= BIT[tidx]) {
+                idx = tidx; accum -= BIT[tidx];
+            }
+        }
+        return idx;
+    }
+};
+
+//Fenwick tree 2d
+template<typename T>
+struct fenwick_tree_2d {
+#define Lbit(x) (x&-x)
+    int n, m;
+    vector<vector<T>> BIT;
+    fenwick_tree_2d(int n, int m) :
+    n(n), m(m), BIT(n + 1, vector<T>(m + 1)) {
+    }
+    T getAccum(int i, int j) {
+        T sum = 0;
+        for (; i; i -= Lbit(i))
+            for (int idx = j; idx > 0; idx -= Lbit(idx))
+                sum += BIT[i][idx];
+
+        return sum;
+    }
+    void add(int i, int j, int val) {
+        assert(i != 0 && j != 0);
+        for (; i <= n; i += Lbit(i))
+            for (int idx = j; idx <= m; idx += Lbit(idx))
+                BIT[i][idx] += val;
+
+    }
+    T getRectangeSum(int x1, int y1, int x2, int y2) {
+        if (y1 > y2)
+            swap(y1, y2);
+        if (x1 > x2)
+            swap(x1, x2);
+        return getAccum(x2, y2) - getAccum(x1 - 1, y2) - getAccum(x2, y1 - 1)
+        + getAccum(x1 - 1, y1 - 1);
+
+    }
+};
+
+//Fenwick tree update range
+/*
+x[i] = a[i] - a[i-1] //a is original array
+y[i] = x[i]*(i-1)
+sum(1,3) = a[1] + a[2] + a[3] = (x[1]) + (x[2] + x[1]) + (x[3] + x[2] + x[1])
+= 3*(x[1] + x[2] + x[3]) - 0*x[1] - 1*x[2] - 2*x[3] //same equation but more complex
+= sumX(1,3) * 3 - sumY(1,3)
+so sum(1,n) = sumX(1,n)*n - sumY(1,n)
+update:
+x[l] += val,x[r+1] -= val
+y[l] += val *(l-1),y[r+1] -= r*val
+*/

@@ -1,0 +1,24 @@
+struct Edge {
+    int a, b, c;
+
+    Edge() {
+        a = b = c = 0;
+    }
+
+    Edge(int a, int b, int c) : a(a), b(b), c(c) {};
+
+    bool operator<(const Edge &r) const {
+        return r.c < c;
+    }
+
+    friend ostream &operator<<(ostream &out, const Edge &e) {
+        out << e.a << " " << e.b << " " << e.c;
+        return out;
+    }
+
+    friend istream &operator>>(istream &in, Edge &e) {
+        in >> e.a >> e.b >> e.c;
+        return in;
+    }
+
+};
